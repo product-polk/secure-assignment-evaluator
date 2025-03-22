@@ -251,21 +251,23 @@ def display_chat_interface():
         st.write("#### Conversation")
         for i, message in enumerate(st.session_state.chat_history):
             if message["role"] == "user":
-                # User message with light blue background
+                # User message with light blue background and improved text styling
                 st.markdown(
                     f"""
-                    <div style="background-color: #e6f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                        <strong>You:</strong><br>{message['content']}
+                    <div style="background-color: #e6f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px; color: #000000;">
+                        <strong style="color: #000000;">You:</strong><br>
+                        <span style="color: #000000;">{message['content']}</span>
                     </div>
                     """, 
                     unsafe_allow_html=True
                 )
             else:
-                # Assistant message with light gray background
+                # Assistant message with light gray background and improved text styling
                 st.markdown(
                     f"""
-                    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                        <strong>Assistant:</strong><br>{message['content']}
+                    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px; color: #000000;">
+                        <strong style="color: #000000;">Assistant:</strong><br>
+                        <span style="color: #000000;">{message['content']}</span>
                     </div>
                     """, 
                     unsafe_allow_html=True
@@ -300,8 +302,9 @@ def display_chat_interface():
                 thinking_placeholder = st.empty()
                 thinking_placeholder.markdown(
                     """
-                    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                        <strong>Assistant:</strong><br>Thinking... <span class="blinking">▌</span>
+                    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px; color: #000000;">
+                        <strong style="color: #000000;">Assistant:</strong><br>
+                        <span style="color: #000000;">Thinking... <span class="blinking">▌</span></span>
                     </div>
                     <style>
                     .blinking {
@@ -345,8 +348,9 @@ def display_chat_interface():
         thinking_placeholder = st.empty()
         thinking_placeholder.markdown(
             """
-            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                <strong>Assistant:</strong><br>Thinking... <span class="blinking">▌</span>
+            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px; color: #000000;">
+                <strong style="color: #000000;">Assistant:</strong><br>
+                <span style="color: #000000;">Thinking... <span class="blinking">▌</span></span>
             </div>
             <style>
             .blinking {
