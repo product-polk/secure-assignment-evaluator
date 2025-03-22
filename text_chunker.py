@@ -1,5 +1,7 @@
 import re
 
+# This is our own tokenizer to avoid NLTK dependencies
+# It's designed to be simple but effective for PDF content
 def simple_sent_tokenize(text):
     """
     Simple sentence tokenizer using regex patterns for common sentence delimiters
