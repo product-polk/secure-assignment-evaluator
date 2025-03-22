@@ -1,0 +1,34 @@
+Restricting the Chatbot to the PDF Content Only
+The biggest challenge is ensuring the LLM doesn’t hallucinate or produce content from outside the PDF. Some strategies:
+
+Retrieval-Augmented QA with a “Strict” Instruction
+
+Put the LLM in a mode where it is explicitly told: “Answer only using the provided context. If you are not sure, say you do not know.”
+Many modern LLMs have “system prompts” or “expert instructions” where you can strictly instruct the model not to use outside knowledge.
+Use Smaller Context Windows
+
+If you feed the LLM only the minimal relevant chunk(s) from the document and a strong system message like “Only use the context provided; do not use external data,” you reduce the chance of invented answers.
+Restrictive Output Format
+
+You could implement some form of output-checker that disallows code blocks or large paragraphs from being repeated verbatim.
+For example, if the LLM tries to produce an exact chunk from the PDF, you can intercept that and transform it or block it.
+Pre-QA Summarization
+
+Even before the LLM sees the chunk, you might do a partial summarization on the chunk so that the LLM never sees raw text large enough to reconstruct the assignment in its entirety.
+4. Preventing Extraction of the Entire Text or Code
+You don’t want the interviewer to simply prompt: “Please give me the entire text or code.” Some ideas:
+
+Excerpt Length Limit
+
+Impose a strict word or character limit on any direct quote from the assignment. The bot might respond:
+“Due to content protection, I can only show a short excerpt: ‘...function XYZ calculates the metric…’”
+
+Provide a short snippet or paraphrased explanation.
+Chunk-by-Chunk Access
+
+Even if the interviewer tries to ask about every paragraph in sequence, the system can detect that pattern (like if they ask “Give me the next 300 words.” repeatedly).
+Then you can throttle the requests or refuse them to prevent reconstruction of the entire text.
+Automated Summaries
+
+For code, you can do “explain in words” rather than “dump the entire function.”
+For text, you can do “summarize the main points” rather than “copy the entire paragraph.”
