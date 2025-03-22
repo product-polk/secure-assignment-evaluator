@@ -63,15 +63,20 @@ def extract_tables_and_visualize(table_data):
             insights = answer_question(insights_prompt, None)
             st.write(insights)
         
-        # Add a section for evaluators to ask specific questions about the table
+        # Add a section for evaluators to ask specific questions about the table using a form
         st.write("**Ask about this table:**")
-        table_question = st.text_input(
-            "Ask a specific question about this table:", 
-            key=f"table_question_{table_data['table_id']}"
-        )
         
-        if st.button("Submit Question", key=f"table_btn_{table_data['table_id']}"):
-            if table_question:
+        # Create a unique form key for this table
+        form_key = f"table_form_{table_data['table_id']}"
+        
+        with st.form(key=form_key):
+            table_question = st.text_input(
+                "Ask a specific question about this table:", 
+                key=f"table_question_{table_data['table_id']}"
+            )
+            submit_table_question = st.form_submit_button("Submit Question")
+            
+            if submit_table_question and table_question:
                 with st.spinner("Analyzing..."):
                     # Create a prompt for the specific question that doesn't expose full data
                     question_prompt = (
