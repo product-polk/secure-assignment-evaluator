@@ -2,9 +2,6 @@ import os
 import sys
 import json
 from http.server import BaseHTTPRequestHandler
-import base64
-import pandas as pd
-import openai
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,8 +16,8 @@ try:
 except ImportError:
     pass
 
-# Set OpenAI API key
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# No OpenAI import is needed in this simplified version
+# We'll run API calls from the main Streamlit app instead
 
 def vercel_handler(event):
     """
@@ -113,6 +110,13 @@ def landing_page():
                 margin-bottom: 20px;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }
+            .note-box {
+                background-color: rgba(255, 193, 7, 0.2);
+                border-left: 4px solid #ffc107;
+                padding: 15px;
+                margin-top: 30px;
+                border-radius: 4px;
+            }
             @media (max-width: 768px) {
                 .mode-card {
                     width: 100%;
@@ -124,21 +128,35 @@ def landing_page():
         <h1>Secure Assignment Evaluator</h1>
         <p>A secure platform for evaluating assignments without the ability to extract content.</p>
         
+        <div class="note-box">
+            <h3>⚠️ Limited Functionality Notice</h3>
+            <p>This is a simplified landing page for the Secure Assignment Evaluator.</p>
+            <p>Due to the serverless architecture limitations of Vercel, this version has restricted functionality:</p>
+            <ul>
+                <li>Assignment uploads are not supported here</li>
+                <li>The AI-powered Q&A functionality is limited</li>
+                <li>Secure PDF processing cannot be performed</li>
+            </ul>
+            <p><strong>Please visit our <a href="https://secure-assignment-evaluator.streamlit.app" style="color: #4e89ae;">main application</a> for full functionality.</strong></p>
+        </div>
+        
         <div class="modes">
             <div class="mode-card">
-                <h2>I am a Candidate</h2>
-                <p>Upload your assignment securely and share it with evaluators.</p>
-                <a href="/api/upload" class="btn">Upload Assignment</a>
+                <h2>About This Tool</h2>
+                <p>The Secure Assignment Evaluator allows evaluators to review assignments without being able to extract the full content.</p>
+                <p>It provides AI-powered analysis of documents, tables, and charts while maintaining content security.</p>
+                <a href="https://secure-assignment-evaluator.streamlit.app" class="btn">Go to Full Application</a>
             </div>
             
             <div class="mode-card">
-                <h2>I am an Evaluator</h2>
-                <p>Enter an assignment ID to review and evaluate content.</p>
-                <form action="/api/evaluate" method="get">
-                    <input type="text" name="id" placeholder="Enter Assignment ID" 
-                           style="padding: 10px; width: 100%; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc;">
-                    <button type="submit" class="btn">Evaluate Assignment</button>
-                </form>
+                <h2>Key Features</h2>
+                <ul>
+                    <li>Secure PDF processing with content protection</li>
+                    <li>AI-powered question answering about documents</li>
+                    <li>Table and chart analysis without content extraction</li>
+                    <li>End-to-end encryption for all uploaded files</li>
+                    <li>Easy sharing with simple assignment IDs</li>
+                </ul>
             </div>
         </div>
         
@@ -199,39 +217,35 @@ def upload_page():
             .btn:hover {
                 background-color: #3a6a8a;
             }
-            input[type="file"] {
-                margin: 20px 0;
-                padding: 10px;
-                width: 100%;
-                background-color: #333;
-                color: white;
-                border-radius: 4px;
-            }
-            .note {
-                background-color: rgba(78, 137, 174, 0.1);
+            .note-box {
+                background-color: rgba(255, 193, 7, 0.2);
+                border-left: 4px solid #ffc107;
                 padding: 15px;
+                margin-top: 30px;
                 border-radius: 4px;
-                margin-top: 20px;
-                border-left: 4px solid #4e89ae;
             }
         </style>
     </head>
     <body>
         <h1>Upload Assignment</h1>
         
+        <div class="note-box">
+            <h3>⚠️ Feature Not Available</h3>
+            <p>Assignment uploads are not supported on this platform due to serverless architecture limitations.</p>
+            <p>To upload and share assignments, please use our main application.</p>
+            <p><a href="https://secure-assignment-evaluator.streamlit.app" class="btn">Go to Full Application</a></p>
+        </div>
+        
         <div class="container">
-            <h2>Candidate Upload</h2>
-            <p>Upload your assignment as a PDF file. It will be securely encrypted and a unique ID will be generated for sharing.</p>
-            
-            <form action="/api/upload" method="post" enctype="multipart/form-data">
-                <input type="file" name="pdf_file" accept=".pdf" required>
-                <p>Note: Maximum file size is 10MB</p>
-                <button type="submit" class="btn">Upload & Generate ID</button>
-            </form>
-            
-            <div class="note">
-                <p><strong>Important:</strong> Your file will be encrypted and can only be accessed by those who have the assignment ID.</p>
-            </div>
+            <h2>About Assignment Uploads</h2>
+            <p>The full version of Secure Assignment Evaluator allows you to:</p>
+            <ul>
+                <li>Upload PDF assignments securely</li>
+                <li>Receive a shareable assignment ID</li>
+                <li>Share the ID with evaluators</li>
+                <li>Benefit from end-to-end encryption</li>
+            </ul>
+            <p>All content is fully encrypted and cannot be accessed without the assignment ID.</p>
         </div>
         
         <a href="/" class="btn" style="margin-top: 30px; background-color: #555;">Back to Home</a>
@@ -273,53 +287,20 @@ def evaluator_page(assignment_id):
                 margin-top: 20px;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }}
-            .chat-container {{
-                height: 400px;
-                overflow-y: auto;
-                padding: 15px;
-                background-color: #1a1a2e;
-                border-radius: 4px;
-                margin-bottom: 15px;
-            }}
-            .message {{
-                padding: 10px 15px;
-                border-radius: 18px;
-                margin-bottom: 10px;
-                max-width: 80%;
-                white-space: pre-wrap;
-            }}
-            .user-message {{
-                background-color: #4e89ae;
-                color: white;
-                margin-left: auto;
-                border-top-right-radius: 4px;
-            }}
-            .system-message {{
-                background-color: #333;
-                color: white;
-                margin-right: auto;
-                border-top-left-radius: 4px;
-            }}
-            .input-group {{
-                display: flex;
-                margin-top: 15px;
-            }}
-            #question-input {{
-                flex: 1;
-                padding: 12px;
-                border-radius: 4px 0 0 4px;
-                border: none;
-                background-color: #333;
-                color: white;
-            }}
             .btn {{
+                display: inline-block;
                 background-color: #4e89ae;
                 color: white;
-                padding: 12px 20px;
-                border: none;
-                border-radius: 0 4px 4px 0;
-                cursor: pointer;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 4px;
                 font-weight: bold;
+                margin-top: 20px;
+                border: none;
+                cursor: pointer;
+            }}
+            .btn:hover {{
+                background-color: #3a6a8a;
             }}
             .btn-secondary {{
                 background-color: #555;
@@ -333,41 +314,12 @@ def evaluator_page(assignment_id):
                 margin-right: 10px;
                 font-size: 14px;
             }}
-            .suggested-questions {{
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-                margin-top: 15px;
-            }}
-            .suggested-question {{
-                background-color: #333;
-                color: white;
-                padding: 8px 12px;
-                border-radius: 16px;
-                font-size: 14px;
-                cursor: pointer;
-                border: 1px solid #4e89ae;
-            }}
-            .suggested-question:hover {{
-                background-color: #4e89ae;
-            }}
-            #loader {{
-                display: none;
-                margin-top: 15px;
-                text-align: center;
-            }}
-            .loading-spinner {{
-                border: 4px solid rgba(255, 255, 255, 0.3);
-                border-radius: 50%;
-                border-top: 4px solid #4e89ae;
-                width: 30px;
-                height: 30px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto;
-            }}
-            @keyframes spin {{
-                0% {{ transform: rotate(0deg); }}
-                100% {{ transform: rotate(360deg); }}
+            .note-box {{
+                background-color: rgba(255, 193, 7, 0.2);
+                border-left: 4px solid #ffc107;
+                padding: 15px;
+                margin-top: 30px;
+                border-radius: 4px;
             }}
         </style>
     </head>
@@ -375,126 +327,29 @@ def evaluator_page(assignment_id):
         <h1>Assignment Evaluation</h1>
         <p>Assignment ID: <strong>{assignment_id}</strong></p>
         
+        <div class="note-box">
+            <h3>⚠️ Feature Not Available</h3>
+            <p>Assignment evaluation and Q&A are not supported on this platform due to serverless architecture limitations.</p>
+            <p>To evaluate assignments and use the full AI-powered Q&A functionality, please use our main application.</p>
+            <p><a href="https://secure-assignment-evaluator.streamlit.app" class="btn">Go to Full Application</a></p>
+        </div>
+        
         <div class="container">
-            <h2>Ask Questions About This Assignment</h2>
-            <p>You can ask questions about the content of the assignment. The AI will generate answers based on the encrypted content without revealing the full text.</p>
-            
-            <div id="chat-container" class="chat-container">
-                <div class="message system-message">Hello! I'm here to help you evaluate this assignment. What would you like to know about it?</div>
-            </div>
-            
-            <div id="suggested-questions" class="suggested-questions">
-                <div class="suggested-question">What is the main topic of this assignment?</div>
-                <div class="suggested-question">What methodology is used in this work?</div>
-                <div class="suggested-question">What are the key findings or conclusions?</div>
-                <div class="suggested-question">Are there any charts or tables in this document?</div>
-                <div class="suggested-question">How well is the literature review done?</div>
-            </div>
-            
-            <div class="input-group">
-                <input type="text" id="question-input" placeholder="Type your question here...">
-                <button id="submit-btn" class="btn">Ask</button>
-            </div>
-            
-            <div id="loader">
-                <p>Thinking...</p>
-                <div class="loading-spinner"></div>
-            </div>
+            <h2>About Assignment Evaluation</h2>
+            <p>The full version of Secure Assignment Evaluator allows you to:</p>
+            <ul>
+                <li>Ask questions about the assignment content</li>
+                <li>Receive AI-generated insights about tables and charts</li>
+                <li>Navigate through different sections of the document</li>
+                <li>Evaluate the quality and structure of the work</li>
+                <li>All without the ability to extract the full content</li>
+            </ul>
+            <p>Please visit our main application to evaluate this assignment.</p>
         </div>
         
         <div style="margin-top: 20px;">
             <a href="/" class="btn-secondary">Back to Home</a>
         </div>
-        
-        <script>
-            const chatContainer = document.getElementById('chat-container');
-            const questionInput = document.getElementById('question-input');
-            const submitBtn = document.getElementById('submit-btn');
-            const loader = document.getElementById('loader');
-            const suggestedQuestions = document.querySelectorAll('.suggested-question');
-            
-            // Assignment ID from URL
-            const assignmentId = '{assignment_id}';
-            
-            // Add event listeners
-            submitBtn.addEventListener('click', handleSubmit);
-            questionInput.addEventListener('keypress', function(e) {{
-                if (e.key === 'Enter') {{
-                    handleSubmit();
-                }}
-            }});
-            
-            // Suggested questions click handler
-            suggestedQuestions.forEach(question => {{
-                question.addEventListener('click', function() {{
-                    questionInput.value = this.textContent;
-                    handleSubmit();
-                }});
-            }});
-            
-            function handleSubmit() {{
-                const question = questionInput.value.trim();
-                if (question === '') return;
-                
-                // Add user message to chat
-                addMessage(question, 'user');
-                
-                // Clear input and show loader
-                questionInput.value = '';
-                loader.style.display = 'block';
-                
-                // Send question to API
-                fetch(`/api/qa?id=${{assignmentId}}&question=${{encodeURIComponent(question)}}`)
-                    .then(response => response.json())
-                    .then(data => {{
-                        // Hide loader
-                        loader.style.display = 'none';
-                        
-                        if (data.error) {{
-                            addMessage(`Error: ${{data.error}}`, 'system');
-                        }} else {{
-                            addMessage(data.answer, 'system');
-                            
-                            // Update suggested questions if available
-                            if (data.suggestions && data.suggestions.length > 0) {{
-                                updateSuggestedQuestions(data.suggestions);
-                            }}
-                        }}
-                    }})
-                    .catch(error => {{
-                        loader.style.display = 'none';
-                        addMessage(`Error: Could not get a response. Please try again.`, 'system');
-                        console.error('Error:', error);
-                    }});
-            }}
-            
-            function addMessage(text, sender) {{
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('message');
-                messageElement.classList.add(sender + '-message');
-                messageElement.textContent = text;
-                
-                chatContainer.appendChild(messageElement);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }}
-            
-            function updateSuggestedQuestions(questions) {{
-                const container = document.getElementById('suggested-questions');
-                container.innerHTML = '';
-                
-                questions.forEach(question => {{
-                    const element = document.createElement('div');
-                    element.classList.add('suggested-question');
-                    element.textContent = question;
-                    element.addEventListener('click', function() {{
-                        questionInput.value = this.textContent;
-                        handleSubmit();
-                    }});
-                    
-                    container.appendChild(element);
-                }});
-            }}
-        </script>
     </body>
     </html>
     """
@@ -509,17 +364,21 @@ def qa_endpoint(assignment_id, question):
     Handle Q&A API requests
     """
     try:
-        # In a real implementation, we would decrypt and process data from storage
-        # For now, return a mock response
+        # For the Vercel serverless version, we can't process files directly
+        # Instead, we'll redirect users to use the main Streamlit application
         
-        answer = f"I would provide an analysis of your question about '{question}', but I need to access the actual encrypted data which is not available in this serverless function environment."
+        answer = """This assignment requires secure processing that can't be handled in this environment.
+        
+Please use the main application at https://secure-assignment-evaluator.streamlit.app to process assignments with full functionality.
+
+This limited version is provided as a landing page only. For evaluation and detailed interaction, please use the main application."""
         
         suggestions = [
-            "What are the key arguments made in this assignment?",
-            "How does the author support their thesis?",
-            "What methodology is used in this research?",
-            "What are the limitations of this study?",
-            "How does this compare to other work in the field?"
+            "What is the main topic of this assignment?",
+            "What methodology is used in this work?",
+            "What are the key findings or conclusions?",
+            "Are there any charts or tables in this document?",
+            "How well is the literature review done?"
         ]
         
         return {
