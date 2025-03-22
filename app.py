@@ -51,30 +51,37 @@ def save_assignment_data():
     if not st.session_state.pdf_processed:
         return None
     
+    # Create a custom JSON encoder for DataFrames
+    class DataFrameEncoder(json.JSONEncoder):
+        def default(self, o):
+            # Convert DataFrame to dict
+            if hasattr(o, 'to_dict'):
+                return o.to_dict()
+            # Let the base class handle other types
+            return super().default(o)
+    
     # Generate a unique ID if not already assigned
     if not st.session_state.assignment_id:
         st.session_state.assignment_id = str(uuid.uuid4())
     
-    # Convert tables to a serializable format
-    serializable_tables = []
-    for table in st.session_state.tables:
-        serializable_table = table.copy()
-        # Convert DataFrame to dictionary if it exists
-        if 'df' in serializable_table:
-            # Convert DataFrame to dictionary if it's a pandas DataFrame
-            if hasattr(serializable_table['df'], 'to_dict'):
-                serializable_table['df'] = serializable_table['df'].to_dict()
-            # If it's already been converted or is something else, leave it
-        serializable_tables.append(serializable_table)
+    # Deep copy and convert tables to a serializable format (safer approach)
+    import copy
+    import pandas as pd
     
-    # Convert charts to a serializable format
-    serializable_charts = []
-    for chart in st.session_state.charts:
-        serializable_chart = chart.copy()
-        # Convert any DataFrame data to dictionary if present
-        if 'data' in serializable_chart and hasattr(serializable_chart['data'], 'to_dict'):
-            serializable_chart['data'] = serializable_chart['data'].to_dict()
-        serializable_charts.append(serializable_chart)
+    def convert_dataframes_to_dict(obj):
+        """Recursively convert DataFrames to dictionaries in nested structures"""
+        if isinstance(obj, pd.DataFrame):
+            return obj.to_dict()
+        elif isinstance(obj, dict):
+            return {k: convert_dataframes_to_dict(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_dataframes_to_dict(item) for item in obj]
+        else:
+            return obj
+    
+    # Create serializable copies of tables and charts
+    serializable_tables = convert_dataframes_to_dict(copy.deepcopy(st.session_state.tables))
+    serializable_charts = convert_dataframes_to_dict(copy.deepcopy(st.session_state.charts))
     
     # Create assignment data with serializable components
     assignment_data = {
@@ -90,7 +97,7 @@ def save_assignment_data():
     # Save to JSON file
     assignment_path = os.path.join(st.session_state.assignments_dir, f"{st.session_state.assignment_id}.json")
     with open(assignment_path, 'w') as f:
-        json.dump(assignment_data, f)
+        json.dump(assignment_data, f, cls=DataFrameEncoder)
     
     return st.session_state.assignment_id
 
@@ -108,24 +115,47 @@ def load_assignment_data(assignment_id):
         # Import pandas here to avoid issues if it's not at the top level
         import pandas as pd
         
+        def convert_dicts_to_dataframes(obj):
+            """Recursively convert dictionaries to DataFrames in nested structures where appropriate"""
+            if isinstance(obj, dict):
+                # Check if this dict should be a DataFrame (has 'orient' indication or proper structure)
+                if any(k in obj for k in ['index', 'columns', 'data']) or len(obj) > 0:
+                    try:
+                        # Try to convert to DataFrame if it has proper structure
+                        return pd.DataFrame.from_dict(obj)
+                    except (ValueError, TypeError):
+                        # Not a valid DataFrame format, continue with recursive conversion
+                        return {k: convert_dicts_to_dataframes(v) for k, v in obj.items()}
+                else:
+                    return {k: convert_dicts_to_dataframes(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_dicts_to_dataframes(item) for item in obj]
+            else:
+                return obj
+        
         # Load data into session state
         st.session_state.pdf_text = assignment_data['pdf_text']
         st.session_state.pdf_chunks = assignment_data['pdf_chunks']
         
-        # Convert tables back from serialized format if needed
+        # Recursively convert dictionaries to DataFrames where needed
         tables = assignment_data['tables']
         for table in tables:
-            # Convert dictionary back to DataFrame if needed
             if 'df' in table and isinstance(table['df'], dict):
+                # This is a specific case where we know it should be a DataFrame
                 table['df'] = pd.DataFrame.from_dict(table['df'])
+            else:
+                # Apply recursive conversion for other nested structures
+                table = convert_dicts_to_dataframes(table)
         st.session_state.tables = tables
         
-        # Convert charts back from serialized format if needed
         charts = assignment_data['charts']
         for chart in charts:
-            # Convert data dictionary back to DataFrame if needed
             if 'data' in chart and isinstance(chart['data'], dict):
+                # This is a specific case where we know it should be a DataFrame
                 chart['data'] = pd.DataFrame.from_dict(chart['data'])
+            else:
+                # Apply recursive conversion for other nested structures
+                chart = convert_dicts_to_dataframes(chart)
         st.session_state.charts = charts
         
         st.session_state.file_hash = assignment_data['file_hash']
