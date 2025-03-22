@@ -223,78 +223,82 @@ def load_assignment_data(assignment_id):
 
 def display_chat_interface():
     """Display improved chat interface for Q&A interactions"""
-    st.write("#### Ask about the Assignment")
+    # Create a dedicated container for the chat interface
+    chat_ui_container = st.container()
     
-    # Create a container for the chat history with custom styling
-    chat_container = st.container()
-    
-    # Display suggested questions
-    if st.session_state.suggested_questions:
-        st.write("#### Suggested Questions")
-        suggestion_cols = st.columns(2)
-        for i, question in enumerate(st.session_state.suggested_questions[:6]):
-            col = suggestion_cols[i % 2]
-            if col.button(question, key=f"suggested_{i}", use_container_width=True):
-                # Use the suggested question
-                st.session_state.chat_history.append({"role": "user", "content": question})
-                with st.spinner("Thinking..."):
-                    answer = answer_question(question, st.session_state.pdf_chunks)
-                st.session_state.chat_history.append({"role": "assistant", "content": answer})
-                
-                # Update suggested questions based on the answer
-                st.session_state.suggested_questions = generate_navigation_suggestions(
-                    st.session_state.pdf_text,
-                    st.session_state.pdf_chunks,
-                    question,
-                    answer
-                )
-                st.rerun()
-    
-    # Display chat history in a more visually appealing way
-    with chat_container:
-        if st.session_state.chat_history:
-            st.write("#### Conversation")
-            for i, message in enumerate(st.session_state.chat_history):
-                if message["role"] == "user":
-                    # User message with light blue background
-                    st.markdown(
-                        f"""
-                        <div style="background-color: #e6f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                            <strong>You:</strong><br>{message['content']}
-                        </div>
-                        """, 
-                        unsafe_allow_html=True
-                    )
-                else:
-                    # Assistant message with light gray background
-                    st.markdown(
-                        f"""
-                        <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                            <strong>Assistant:</strong><br>{message['content']}
-                        </div>
-                        """, 
-                        unsafe_allow_html=True
-                    )
-    
-    # Initialize session state for form submission
-    if "submit_question" not in st.session_state:
-        st.session_state.submit_question = False
-    
-    # Set up form to handle submission properly
-    with st.form(key="question_form"):
-        user_question = st.text_input(
-            "Ask a question about the assignment:", 
-            key="question_input",
-            placeholder="Type your question here..."
-        )
-        submit_cols = st.columns([3, 1])
-        with submit_cols[1]:
-            submit_button = st.form_submit_button("Submit Question", use_container_width=True)
+    with chat_ui_container:
+        st.write("#### Ask about the Assignment")
         
-        # When form is submitted, set the flag
-        if submit_button and user_question:
-            st.session_state.submit_question = True
-            st.session_state.current_question = user_question
+        # Create a container for the chat history with custom styling
+        chat_container = st.container()
+        
+        # Display suggested questions
+        if st.session_state.suggested_questions:
+            st.write("#### Suggested Questions")
+            suggestion_cols = st.columns(2)
+            for i, question in enumerate(st.session_state.suggested_questions[:6]):
+                col = suggestion_cols[i % 2]
+                if col.button(question, key=f"suggested_{i}", use_container_width=True):
+                    # Use the suggested question
+                    st.session_state.chat_history.append({"role": "user", "content": question})
+                    with st.spinner("Thinking..."):
+                        answer = answer_question(question, st.session_state.pdf_chunks)
+                    st.session_state.chat_history.append({"role": "assistant", "content": answer})
+                    
+                    # Update suggested questions based on the answer
+                    st.session_state.suggested_questions = generate_navigation_suggestions(
+                        st.session_state.pdf_text,
+                        st.session_state.pdf_chunks,
+                        question,
+                        answer
+                    )
+                    st.rerun()
+        
+        # Display chat history in a more visually appealing way
+        with chat_container:
+            if st.session_state.chat_history:
+                st.write("#### Conversation")
+                for i, message in enumerate(st.session_state.chat_history):
+                    if message["role"] == "user":
+                        # User message with light blue background
+                        st.markdown(
+                            f"""
+                            <div style="background-color: #e6f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                                <strong>You:</strong><br>{message['content']}
+                            </div>
+                            """, 
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        # Assistant message with light gray background
+                        st.markdown(
+                            f"""
+                            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                                <strong>Assistant:</strong><br>{message['content']}
+                            </div>
+                            """, 
+                            unsafe_allow_html=True
+                        )
+        
+        # Initialize session state for form submission
+        if "submit_question" not in st.session_state:
+            st.session_state.submit_question = False
+        
+        # Set up form to handle submission properly
+        with st.form(key="question_form"):
+            user_question = st.text_input(
+                "Ask a question about the assignment:", 
+                key="question_input",
+                placeholder="Type your question here..."
+            )
+            submit_cols = st.columns([3, 1])
+            with submit_cols[1]:
+                submit_button = st.form_submit_button("Submit Question", use_container_width=True)
+            
+            # When form is submitted, set the flag
+            if submit_button and user_question:
+                st.session_state.submit_question = True
+                st.session_state.current_question = user_question
     
     # Handle the question submission after the form
     if st.session_state.submit_question and hasattr(st.session_state, 'current_question'):
@@ -331,93 +335,106 @@ def display_chat_interface():
 
 def evaluation_interface():
     """Main evaluation interface with tabs"""
-    # Create tabs for different functionalities
-    tab1, tab2, tab3 = st.tabs(["Q&A Assistant", "Data Visualization", "Navigation Guide"])
+    # Create a clean container for the evaluation interface
+    # This prevents old UI elements from showing after state changes
+    eval_container = st.container()
     
-    with tab1:
-        st.header("Ask about the Assignment")
-        # Use the improved chat interface
-        display_chat_interface()
-    
-    with tab2:
-        st.header("Data Visualization")
+    # Use the container for all tab content
+    with eval_container:
+        # Create tabs for different functionalities
+        tab1, tab2, tab3 = st.tabs(["Q&A Assistant", "Data Visualization", "Navigation Guide"])
         
-        # Display tables
-        if st.session_state.tables:
-            st.subheader("Tables from the Assignment")
-            for i, table in enumerate(st.session_state.tables):
-                with st.expander(f"Table {i+1} (Page {table['page']})"):
-                    extract_tables_and_visualize(table)
-        else:
-            st.info("No tables detected in the assignment.")
+        # All tabs content goes inside the container
+        with tab1:
+            st.header("Ask about the Assignment")
+            # Use the improved chat interface
+            display_chat_interface()
         
-        # Display charts
-        if st.session_state.charts:
-            st.subheader("Charts from the Assignment")
-            for i, chart in enumerate(st.session_state.charts):
-                with st.expander(f"Chart {i+1} (Page {chart['page']})"):
-                    extract_charts_and_visualize(chart)
-        else:
-            st.info("No charts detected in the assignment.")
-    
-    with tab3:
-        st.header("Assignment Navigation")
+        with tab2:
+            st.header("Data Visualization")
+            
+            # Display tables
+            if st.session_state.tables:
+                st.subheader("Tables from the Assignment")
+                for i, table in enumerate(st.session_state.tables):
+                    with st.expander(f"Table {i+1} (Page {table['page']})"):
+                        extract_tables_and_visualize(table)
+            else:
+                st.info("No tables detected in the assignment.")
+            
+            # Display charts
+            if st.session_state.charts:
+                st.subheader("Charts from the Assignment")
+                for i, chart in enumerate(st.session_state.charts):
+                    with st.expander(f"Chart {i+1} (Page {chart['page']})"):
+                        extract_charts_and_visualize(chart)
+            else:
+                st.info("No charts detected in the assignment.")
         
-        # Show sections navigation
-        st.subheader("Explore Assignment Sections")
-        
-        # Generate a structural overview of the document
-        with st.spinner("Analyzing document structure..."):
-            structure_prompt = "Based on the document chunks, identify the main sections or chapters of this assignment. List them in order."
-            structure = answer_question(structure_prompt, st.session_state.pdf_chunks)
-        
-        st.write(structure)
-        
-        # Show key concepts
-        st.subheader("Key Concepts")
-        with st.spinner("Extracting key concepts..."):
-            concepts_prompt = "What are the 5-7 most important concepts or ideas in this assignment? List each with a very brief description."
-            concepts = answer_question(concepts_prompt, st.session_state.pdf_chunks)
-        
-        st.write(concepts)
+        with tab3:
+            st.header("Assignment Navigation")
+            
+            # Show sections navigation
+            st.subheader("Explore Assignment Sections")
+            
+            # Generate a structural overview of the document
+            with st.spinner("Analyzing document structure..."):
+                structure_prompt = "Based on the document chunks, identify the main sections or chapters of this assignment. List them in order."
+                structure = answer_question(structure_prompt, st.session_state.pdf_chunks)
+            
+            st.write(structure)
+            
+            # Show key concepts
+            st.subheader("Key Concepts")
+            with st.spinner("Extracting key concepts..."):
+                concepts_prompt = "What are the 5-7 most important concepts or ideas in this assignment? List each with a very brief description."
+                concepts = answer_question(concepts_prompt, st.session_state.pdf_chunks)
+            
+            st.write(concepts)
 
 def select_user_mode():
     """Show mode selection screen"""
-    st.title("Secure Assignment Evaluator")
+    # Create a clean container for the mode selection
+    main_container = st.container()
     
-    st.write("### Choose Your Role")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.info("##### I'm submitting an assignment")
-        if st.button("Candidate Mode", use_container_width=True):
-            st.session_state.user_mode = 'candidate'
-            st.rerun()
-    
-    with col2:
-        st.info("##### I'm evaluating an assignment")
-        if st.button("Evaluator Mode", use_container_width=True):
-            st.session_state.user_mode = 'evaluator'
-            st.rerun()
-    
-    st.markdown("---")
-    st.write("### About This Application")
-    st.write("""
-    This secure assignment evaluation platform allows:
-    
-    **For Candidates:**
-    - Upload your assignment (PDF format)
-    - Generate a secure sharing link for evaluators
-    - Your original content remains protected
-    
-    **For Evaluators:**
-    - Access assignments via secure links
-    - Ask questions about the assignment content
-    - View secure insights about tables and charts
-    - Navigate through the assignment with AI guidance
-    - Evaluate quality without extracting content
-    """)
+    with main_container:
+        st.title("Secure Assignment Evaluator")
+        
+        st.write("### Choose Your Role")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.info("##### I'm submitting an assignment")
+            if st.button("Candidate Mode", use_container_width=True):
+                st.session_state.user_mode = 'candidate'
+                st.session_state.container_reset = True
+                st.rerun()
+        
+        with col2:
+            st.info("##### I'm evaluating an assignment")
+            if st.button("Evaluator Mode", use_container_width=True):
+                st.session_state.user_mode = 'evaluator'
+                st.session_state.container_reset = True
+                st.rerun()
+        
+        st.markdown("---")
+        st.write("### About This Application")
+        st.write("""
+        This secure assignment evaluation platform allows:
+        
+        **For Candidates:**
+        - Upload your assignment (PDF format)
+        - Generate a secure sharing link for evaluators
+        - Your original content remains protected
+        
+        **For Evaluators:**
+        - Access assignments via secure links
+        - Ask questions about the assignment content
+        - View secure insights about tables and charts
+        - Navigate through the assignment with AI guidance
+        - Evaluate quality without extracting content
+        """)
 
 def candidate_mode():
     """Interface for candidates uploading assignments"""
