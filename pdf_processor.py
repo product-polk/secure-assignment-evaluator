@@ -86,11 +86,19 @@ def extract_text_and_elements_from_pdf(pdf_path):
                         is_likely_chart = any(keyword in area_text.lower() for keyword in chart_keywords)
                         
                         if is_likely_chart or len(area_text) < 100:  # If very little text, might be a chart
+                            # Extract surrounding text to get chart context
+                            surrounding_text = extract_text_around_chart(text, {
+                                "page": page_num + 1,
+                                "chart_id": f"page{page_num+1}_chart{i+1}"
+                            })
+                            
                             charts.append({
                                 "page": page_num + 1,
                                 "chart_id": f"page{page_num+1}_chart{i+1}",
                                 "area": crop_area,
-                                "description": f"Chart found on page {page_num+1}"
+                                "description": f"Chart found on page {page_num+1}",
+                                "area_text": area_text,
+                                "context": surrounding_text
                             })
     
     except Exception as e:

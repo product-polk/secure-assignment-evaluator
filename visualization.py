@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import re
+from secure_qa import answer_question
 
 def extract_tables_and_visualize(table_data):
     """
@@ -166,26 +167,46 @@ def create_safe_dataframe(df):
 
 def extract_charts_and_visualize(chart_info):
     """
-    Visualize chart information securely
+    Extract and display chart information securely without visualizing
     
     Args:
         chart_info (dict): Chart information
     """
-    st.write(f"Chart/Figure from page {chart_info['page']}")
-    st.write(chart_info["description"])
+    st.write(f"##### Chart/Figure from page {chart_info['page']}")
     
-    # Since we can't access the actual chart image, we'll create a placeholder
-    # and provide a description of what would be visible
-    st.info(f"This is a protected chart area. The chart appears on page {chart_info['page']}.")
+    # Display chart context
+    if "context" in chart_info:
+        st.write("**Chart Context:**")
+        st.markdown(f"```{chart_info['context']}```")
     
-    # Offer to generate a recreation based on description
-    if st.button("Generate Visual Interpretation", key=f"recreate_{chart_info['chart_id']}"):
-        with st.spinner("Interpreting chart..."):
-            # Create a placeholder chart based on the chart area text
-            st.write("### Visual Interpretation")
+    # Display any text found in the chart area
+    if "area_text" in chart_info and chart_info["area_text"]:
+        st.write("**Text in chart area:**")
+        st.markdown(f"```{chart_info['area_text']}```")
+    
+    # Provide insights about the chart
+    st.write("**Chart Insights:**")
+    
+    # Get chart insights using the LLM but don't visualize
+    with st.spinner("Analyzing chart context..."):
+        insights_prompt = (
+            f"Based on the surrounding text context of this chart on page {chart_info['page']}, "
+            f"provide 3-5 key insights this chart likely conveys. DO NOT try to recreate or visualize the chart. "
+            f"Just provide analytical insights based on the chart context. Format your response as bullet points."
+        )
+        
+        if "context" in chart_info:
+            insights_prompt += f"\n\nChart context: {chart_info['context']}"
+        
+        if "area_text" in chart_info and chart_info["area_text"]:
+            insights_prompt += f"\n\nText in chart area: {chart_info['area_text']}"
             
-            # Create a placeholder visualization
-            create_placeholder_visualization(chart_info)
+        # Use the secure_qa.answer_question function to generate insights
+        # We pass chunks=None because this is a special case not using document chunks
+        insights = answer_question(insights_prompt, None)
+        
+        # Display the insights
+        st.write(insights)
 
 def create_placeholder_visualization(chart_info):
     """

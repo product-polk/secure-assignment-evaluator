@@ -21,13 +21,47 @@ def answer_question(question, chunks):
     
     Args:
         question (str): User's question
-        chunks (list): List of text chunks from the document
+        chunks (list): List of text chunks from the document, or None if direct question
         
     Returns:
         str: Answer to the question
     """
     global consecutive_quote_requests, previous_chunks_provided
     
+    # Special case for direct chart analysis (when chunks is None)
+    if chunks is None:
+        # In this case, question contains all the context needed for analysis
+        system_prompt = """
+        You are a chart analysis expert helping evaluate an assignment. Your task is to:
+        
+        1. Analyze the provided text describing a chart or figure
+        2. Provide insightful analysis based only on the text description
+        3. Do NOT attempt to recreate or visualize the chart
+        4. Focus on explaining what insights the chart likely conveys
+        5. Format your response as 3-5 bullet points for readability
+        
+        Do not use any external knowledge or make up data. Only analyze what's in the text.
+        """
+        
+        try:
+            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            # do not change this unless explicitly requested by the user
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": question}
+                ],
+                temperature=0.3,
+                max_tokens=600
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            return f"Error analyzing chart: {str(e)}. Please try again."
+    
+    # Regular document-based Q&A flow
     # Check if this is a request for direct content extraction
     extraction_patterns = [
         r"extract\s+(?:all|complete|entire|full|whole)\s+(?:text|content|document|assignment|pdf)",
