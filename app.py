@@ -3,6 +3,7 @@ import os
 import tempfile
 import uuid
 import json
+import sys
 from datetime import datetime
 from pdf_processor import extract_text_and_elements_from_pdf
 from text_chunker import chunk_text, simple_sent_tokenize
@@ -11,6 +12,12 @@ from visualization import extract_tables_and_visualize, extract_charts_and_visua
 from navigation import generate_navigation_suggestions
 from utils import get_file_hash
 from encryption import encrypt_data, decrypt_data, secure_file_path, encrypt_file, decrypt_file
+
+# Handle Streamlit Cloud health check endpoint
+# This is added to fix the "connection refused" error on Streamlit Cloud
+if len(sys.argv) > 1 and sys.argv[1] == "healthz":
+    print("Health check: OK")
+    sys.exit(0)
 
 # Use our custom sentence tokenizer instead of NLTK's
 # This prevents NLTK from trying to load punkt_tab resource
