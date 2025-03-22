@@ -39,6 +39,9 @@ if 'user_mode' not in st.session_state:
     st.session_state.user_mode = None  # 'candidate' or 'evaluator'
 if 'assignment_id' not in st.session_state:
     st.session_state.assignment_id = None
+# UI state management
+if 'container_reset' not in st.session_state:
+    st.session_state.container_reset = False
 if 'assignments_dir' not in st.session_state:
     # Create a data directory for storing assignments if it doesn't exist
     data_dir = os.path.join(os.getcwd(), 'data')
@@ -62,7 +65,14 @@ def save_assignment_data():
     
     # Generate a unique ID if not already assigned
     if not st.session_state.assignment_id:
-        st.session_state.assignment_id = str(uuid.uuid4())
+        # Create a shorter, more readable ID by using base64 encoding of random bytes
+        import base64
+        import os
+        # Generate 6 random bytes (will result in 8 characters when base64 encoded)
+        random_bytes = os.urandom(6)
+        # Convert to base64 and remove any special characters
+        short_id = base64.urlsafe_b64encode(random_bytes).decode('utf-8').replace('=', '')
+        st.session_state.assignment_id = short_id
     
     # Deep copy and convert tables to a serializable format (safer approach)
     import copy
@@ -381,12 +391,20 @@ def select_user_mode():
 
 def candidate_mode():
     """Interface for candidates uploading assignments"""
-    st.title("Assignment Submission")
+    # Clear the screen and start fresh
+    st.empty()
     
-    # Allow mode switching
-    if st.sidebar.button("Switch to Evaluator Mode"):
-        st.session_state.user_mode = 'evaluator'
-        st.rerun()
+    # Put mode switching in sidebar with better organization
+    with st.sidebar:
+        st.title("Navigation")
+        if st.button("Switch to Evaluator Mode", use_container_width=True):
+            st.session_state.user_mode = 'evaluator'
+            # Clear any existing containers/elements
+            st.session_state.container_reset = True
+            st.rerun()
+    
+    # Main content area
+    st.title("Assignment Submission")
     
     # Upload section
     st.write("### Upload Your Assignment")
@@ -440,17 +458,6 @@ def candidate_mode():
     
     # Show sharing options if file is processed
     if st.session_state.pdf_processed:
-        st.write("### Assignment Statistics:")
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Pages", f"~{len(st.session_state.pdf_chunks)}")
-        with col2:
-            st.metric("Characters", f"{len(st.session_state.pdf_text):,}")
-        with col3:
-            st.metric("Tables", len(st.session_state.tables))
-        with col4:
-            st.metric("Charts", len(st.session_state.charts))
-        
         st.write("### Share with Evaluators")
         st.info("Generate a secure link that evaluators can use to access and evaluate your assignment without extracting the content.")
         
@@ -477,12 +484,20 @@ def candidate_mode():
 
 def evaluator_mode():
     """Interface for evaluators reviewing assignments"""
-    st.title("Assignment Evaluation")
+    # Clear the screen and start fresh
+    st.empty()
     
-    # Allow mode switching
-    if st.sidebar.button("Switch to Candidate Mode"):
-        st.session_state.user_mode = 'candidate'
-        st.rerun()
+    # Put mode switching in sidebar with better organization
+    with st.sidebar:
+        st.title("Navigation")
+        if st.button("Switch to Candidate Mode", use_container_width=True):
+            st.session_state.user_mode = 'candidate'
+            # Clear any existing containers/elements
+            st.session_state.container_reset = True
+            st.rerun()
+    
+    # Main content area
+    st.title("Assignment Evaluation")
     
     # Check for assignment ID in URL parameters
     query_params = st.query_params
@@ -531,19 +546,16 @@ def evaluator_mode():
         # Display assignment loaded confirmation
         st.sidebar.success("✅ Assignment loaded")
         
-        # Display assignment statistics in sidebar
-        with st.sidebar:
-            st.write("### Assignment Stats")
-            st.write(f"- Pages: ~{len(st.session_state.pdf_chunks)}")
-            st.write(f"- Tables: {len(st.session_state.tables)}")
-            st.write(f"- Charts: {len(st.session_state.charts)}")
-            st.write(f"- Size: {len(st.session_state.pdf_text) / 1000:.1f}K chars")
-        
         # Main evaluation interface with tabs
         evaluation_interface()
 
 def main():
     """Main function to determine which interface to show"""
+    # Check if we need to reset containers due to mode switch
+    if st.session_state.container_reset:
+        # Reset the flag for next iteration
+        st.session_state.container_reset = False
+    
     # Determine which mode to display
     if st.session_state.user_mode is None:
         select_user_mode()
