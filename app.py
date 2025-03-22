@@ -407,8 +407,16 @@ def candidate_mode():
     with st.sidebar:
         st.title("Navigation")
         if st.button("Switch to Evaluator Mode", use_container_width=True):
+            # Clear UI state variables as needed
+            if 'pdf_processed' in st.session_state:
+                st.session_state.pdf_processed = False
+            if 'chat_history' in st.session_state:
+                st.session_state.chat_history = []
+            if 'suggested_questions' in st.session_state:
+                st.session_state.suggested_questions = []
+            
+            # Set mode and reset flag
             st.session_state.user_mode = 'evaluator'
-            # Clear any existing containers/elements
             st.session_state.container_reset = True
             st.rerun()
     
@@ -489,6 +497,7 @@ def candidate_mode():
         # Preview option
         if st.button("Preview Evaluator View"):
             st.session_state.user_mode = 'evaluator'
+            st.session_state.container_reset = True
             st.rerun()
 
 def evaluator_mode():
@@ -500,8 +509,16 @@ def evaluator_mode():
     with st.sidebar:
         st.title("Navigation")
         if st.button("Switch to Candidate Mode", use_container_width=True):
+            # Clear UI state variables as needed
+            if 'pdf_processed' in st.session_state:
+                st.session_state.pdf_processed = False
+            if 'chat_history' in st.session_state:
+                st.session_state.chat_history = []
+            if 'suggested_questions' in st.session_state:
+                st.session_state.suggested_questions = []
+            
+            # Set mode and reset flag
             st.session_state.user_mode = 'candidate'
-            # Clear any existing containers/elements
             st.session_state.container_reset = True
             st.rerun()
     
@@ -562,6 +579,28 @@ def main():
     """Main function to determine which interface to show"""
     # Check if we need to reset containers due to mode switch
     if st.session_state.container_reset:
+        # Create a container that will replace previous UI elements
+        for i in range(20):
+            st.empty()
+        
+        # Reset session state variables to clean slate
+        variables_to_reset = [
+            'chat_history', 'suggested_questions'
+        ]
+        
+        for var in variables_to_reset:
+            if var in st.session_state:
+                if isinstance(st.session_state[var], list):
+                    st.session_state[var] = []
+                elif isinstance(st.session_state[var], dict):
+                    st.session_state[var] = {}
+                elif isinstance(st.session_state[var], bool):
+                    st.session_state[var] = False
+                elif isinstance(st.session_state[var], (int, float)):
+                    st.session_state[var] = 0
+                elif isinstance(st.session_state[var], str):
+                    st.session_state[var] = ""
+        
         # Reset the flag for next iteration
         st.session_state.container_reset = False
     
