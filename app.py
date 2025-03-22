@@ -10,6 +10,7 @@ from secure_qa import answer_question
 from visualization import extract_tables_and_visualize, extract_charts_and_visualize
 from navigation import generate_navigation_suggestions
 from utils import get_file_hash
+from encryption import encrypt_data, decrypt_data, secure_file_path, encrypt_file, decrypt_file
 
 # Use our custom sentence tokenizer instead of NLTK's
 # This prevents NLTK from trying to load punkt_tab resource
@@ -113,23 +114,39 @@ def save_assignment_data():
         'file_hash': st.session_state.file_hash
     }
     
-    # Save to JSON file
-    assignment_path = os.path.join(st.session_state.assignments_dir, f"{st.session_state.assignment_id}.json")
-    with open(assignment_path, 'w') as f:
-        json.dump(assignment_data, f, cls=DataFrameEncoder)
+    # Save to encrypted file using secure file path
+    assignment_path = secure_file_path(st.session_state.assignment_id)
+    
+    # Convert to JSON string with custom encoder
+    json_data = json.dumps(assignment_data, cls=DataFrameEncoder)
+    
+    # Encrypt the data
+    encrypted_data = encrypt_data(assignment_data, st.session_state.assignment_id)
+    
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(assignment_path), exist_ok=True)
+    
+    # Write encrypted data
+    with open(assignment_path, 'wb') as f:
+        f.write(encrypted_data)
     
     return st.session_state.assignment_id
 
 def load_assignment_data(assignment_id):
     """Load assignment data from ID"""
-    assignment_path = os.path.join(st.session_state.assignments_dir, f"{assignment_id}.json")
+    # Get secure file path for this assignment ID
+    assignment_path = secure_file_path(assignment_id)
     
     if not os.path.exists(assignment_path):
         return False
     
     try:
-        with open(assignment_path, 'r') as f:
-            assignment_data = json.load(f)
+        # Read encrypted data
+        with open(assignment_path, 'rb') as f:
+            encrypted_data = f.read()
+        
+        # Decrypt the data
+        assignment_data = decrypt_data(encrypted_data, assignment_id)
         
         # Import pandas here to avoid issues if it's not at the top level
         import pandas as pd
@@ -433,9 +450,12 @@ def candidate_mode():
         
         if st.session_state.file_hash != file_hash:
             with st.spinner("Processing your assignment..."):
-                # Save the uploaded file to a temporary file
+                # Get the raw PDF data
+                pdf_data = uploaded_file.getvalue()
+                
+                # Save the uploaded file to a temporary file for processing
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-                    tmp_file.write(uploaded_file.getvalue())
+                    tmp_file.write(pdf_data)
                     pdf_path = tmp_file.name
                 
                 # Extract text and other elements from the PDF
@@ -443,6 +463,25 @@ def candidate_mode():
                 
                 # Clean up the temporary file
                 os.unlink(pdf_path)
+                
+                # Generate a unique ID for this assignment if not already assigned
+                if not st.session_state.assignment_id:
+                    import base64
+                    import os
+                    # Generate 6 random bytes (will result in 8 characters when base64 encoded)
+                    random_bytes = os.urandom(6)
+                    # Convert to base64 and remove any special characters
+                    short_id = base64.urlsafe_b64encode(random_bytes).decode('utf-8').replace('=', '')
+                    st.session_state.assignment_id = short_id
+                
+                # Encrypt and store the original PDF file
+                encrypted_pdf = encrypt_file(pdf_data, st.session_state.assignment_id)
+                pdf_storage_path = os.path.join(
+                    st.session_state.assignments_dir, 
+                    f"{st.session_state.assignment_id}_pdf.enc"
+                )
+                with open(pdf_storage_path, 'wb') as f:
+                    f.write(encrypted_pdf)
                 
                 # Process text into chunks for better handling
                 chunks = chunk_text(text)
@@ -455,7 +494,6 @@ def candidate_mode():
                 st.session_state.tables = tables
                 st.session_state.charts = charts
                 st.session_state.chat_history = []
-                st.session_state.assignment_id = None  # Reset ID for new file
                 
                 # Initialize suggested questions
                 initial_prompt = "Based on the content of this assignment, what are 6 important questions an evaluator might ask to assess the quality of the work?"
