@@ -125,27 +125,46 @@ def main():
                         )
                         st.rerun()
             
-            # Chat input
-            user_question = st.text_input("Ask a question about the assignment:", key="question_input")
+            # Initialize the text input state if it doesn't exist
+            if "question_text" not in st.session_state:
+                st.session_state.question_text = ""
+                
+            # Create a callback to handle submission and clear input
+            def handle_question_submit():
+                # Get the question from session state
+                user_question = st.session_state.question_input
+                if user_question:
+                    # Add to chat history
+                    st.session_state.chat_history.append({"role": "user", "content": user_question})
+                    
+                    # Generate answer
+                    with st.spinner("Generating answer..."):
+                        answer = answer_question(user_question, st.session_state.pdf_chunks)
+                    
+                    # Add answer to chat history
+                    st.session_state.chat_history.append({"role": "assistant", "content": answer})
+                    
+                    # Update suggested questions
+                    st.session_state.suggested_questions = generate_navigation_suggestions(
+                        st.session_state.pdf_text,
+                        st.session_state.pdf_chunks,
+                        user_question,
+                        answer
+                    )
+                    
+                    # Reset the input widget by clearing its value in session state
+                    st.session_state.question_input = ""
+            
+            # Chat input with submit callback
+            user_question = st.text_input(
+                "Ask a question about the assignment:", 
+                key="question_input", 
+                on_change=handle_question_submit
+            )
+            
+            # Add submit button (not strictly necessary with on_change)
             if st.button("Submit") and user_question:
-                st.session_state.chat_history.append({"role": "user", "content": user_question})
-                
-                with st.spinner("Generating answer..."):
-                    answer = answer_question(user_question, st.session_state.pdf_chunks)
-                
-                st.session_state.chat_history.append({"role": "assistant", "content": answer})
-                
-                # Update suggested questions
-                st.session_state.suggested_questions = generate_navigation_suggestions(
-                    st.session_state.pdf_text,
-                    st.session_state.pdf_chunks,
-                    user_question,
-                    answer
-                )
-                
-                # Clear the input
-                st.session_state.question_input = ""
-                st.rerun()
+                handle_question_submit()
             
             # Display chat history
             st.write("#### Conversation History")
