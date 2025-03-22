@@ -225,57 +225,68 @@ def display_chat_interface():
     """Display improved chat interface for Q&A interactions"""
     st.write("#### Ask about the Assignment")
     
-    # Create a container for the chat history with custom styling
-    chat_container = st.container()
-    
-    # Display chat history in a more visually appealing way
-    with chat_container:
-        if st.session_state.chat_history:
-            st.write("#### Conversation")
-            for i, message in enumerate(st.session_state.chat_history):
-                if message["role"] == "user":
-                    # User message with light blue background
-                    st.markdown(
-                        f"""
-                        <div style="background-color: #e6f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                            <strong>You:</strong><br>{message['content']}
-                        </div>
-                        """, 
-                        unsafe_allow_html=True
-                    )
-                else:
-                    # Assistant message with light gray background
-                    st.markdown(
-                        f"""
-                        <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                            <strong>Assistant:</strong><br>{message['content']}
-                        </div>
-                        """, 
-                        unsafe_allow_html=True
-                    )
-    
-    # Initialize session state for form submission
+    # Initialize session state variables
     if "submit_question" not in st.session_state:
         st.session_state.submit_question = False
     
-    # Set up form to handle submission properly with custom styling
-    with st.form(key="question_form"):
-        user_question = st.text_input(
+    # Create a callback to handle form submission
+    def handle_submit():
+        # Get the question from session state
+        question = st.session_state.question_input
+        
+        # Only process if there's an actual question
+        if question:
+            # Add to chat history
+            st.session_state.chat_history.append({"role": "user", "content": question})
+            
+            # Set a flag for processing after form
+            st.session_state.submit_question = True
+            st.session_state.current_question = question
+            
+            # Clear the input field by setting session state
+            st.session_state.question_input = ""
+    
+    # Display chat history in a more visually appealing way
+    if st.session_state.chat_history:
+        st.write("#### Conversation")
+        for i, message in enumerate(st.session_state.chat_history):
+            if message["role"] == "user":
+                # User message with light blue background
+                st.markdown(
+                    f"""
+                    <div style="background-color: #e6f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                        <strong>You:</strong><br>{message['content']}
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
+                )
+            else:
+                # Assistant message with light gray background
+                st.markdown(
+                    f"""
+                    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                        <strong>Assistant:</strong><br>{message['content']}
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
+                )
+    
+    # Set up form with on_change callback
+    with st.form(key="question_form", clear_on_submit=True):
+        st.text_input(
             "Ask a question about the assignment:", 
             key="question_input",
-            placeholder="Type your question here...",
-            value=""  # Ensure empty value after submission
+            placeholder="Type your question here..."
         )
         submit_cols = st.columns([3, 1])
         with submit_cols[1]:
-            submit_button = st.form_submit_button("Submit Question", use_container_width=True)
-        
-        # When form is submitted, set the flag
-        if submit_button and user_question:
-            st.session_state.submit_question = True
-            st.session_state.current_question = user_question
+            submit_button = st.form_submit_button(
+                "Submit Question", 
+                on_click=handle_submit,
+                use_container_width=True
+            )
     
-    # Display suggested questions below the input box
+    # Display suggested questions after the input form
     if st.session_state.suggested_questions:
         st.write("#### Suggested Questions")
         suggestion_cols = st.columns(2)
@@ -284,8 +295,33 @@ def display_chat_interface():
             if col.button(question, key=f"suggested_{i}", use_container_width=True):
                 # Use the suggested question
                 st.session_state.chat_history.append({"role": "user", "content": question})
-                with st.spinner("Thinking..."):
-                    answer = answer_question(question, st.session_state.pdf_chunks)
+                
+                # Show a "thinking" message
+                thinking_placeholder = st.empty()
+                thinking_placeholder.markdown(
+                    """
+                    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                        <strong>Assistant:</strong><br>Thinking... <span class="blinking">▌</span>
+                    </div>
+                    <style>
+                    .blinking {
+                        animation: blinker 1s linear infinite;
+                    }
+                    @keyframes blinker {
+                        50% { opacity: 0; }
+                    }
+                    </style>
+                    """, 
+                    unsafe_allow_html=True
+                )
+                
+                # Generate the answer
+                answer = answer_question(question, st.session_state.pdf_chunks)
+                
+                # Replace the thinking message with the real answer
+                thinking_placeholder.empty()
+                
+                # Add to chat history
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 
                 # Update suggested questions based on the answer
@@ -297,7 +333,7 @@ def display_chat_interface():
                 )
                 st.rerun()
     
-    # Handle the question submission after the form
+    # Process submitted question after the form
     if st.session_state.submit_question and hasattr(st.session_state, 'current_question'):
         # Get the question
         question = st.session_state.current_question
@@ -305,12 +341,30 @@ def display_chat_interface():
         # Reset the submission flag
         st.session_state.submit_question = False
         
-        # Add to chat history
-        st.session_state.chat_history.append({"role": "user", "content": question})
+        # Show a "thinking" message
+        thinking_placeholder = st.empty()
+        thinking_placeholder.markdown(
+            """
+            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                <strong>Assistant:</strong><br>Thinking... <span class="blinking">▌</span>
+            </div>
+            <style>
+            .blinking {
+                animation: blinker 1s linear infinite;
+            }
+            @keyframes blinker {
+                50% { opacity: 0; }
+            }
+            </style>
+            """, 
+            unsafe_allow_html=True
+        )
         
         # Generate answer
-        with st.spinner("Generating answer..."):
-            answer = answer_question(question, st.session_state.pdf_chunks)
+        answer = answer_question(question, st.session_state.pdf_chunks)
+        
+        # Remove the thinking message
+        thinking_placeholder.empty()
         
         # Add answer to chat history
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -326,12 +380,8 @@ def display_chat_interface():
         # Clear the current question
         if hasattr(st.session_state, 'current_question'):
             delattr(st.session_state, 'current_question')
-        
-        # Clear the input field - need to modify session state directly
-        if 'question_input' in st.session_state:
-            st.session_state.question_input = ""
-        
-        # Rerun to refresh the UI
+            
+        # Rerun to refresh the UI with new messages
         st.rerun()
 
 def evaluation_interface():
