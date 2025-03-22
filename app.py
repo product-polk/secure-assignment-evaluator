@@ -228,28 +228,6 @@ def display_chat_interface():
     # Create a container for the chat history with custom styling
     chat_container = st.container()
     
-    # Display suggested questions
-    if st.session_state.suggested_questions:
-        st.write("#### Suggested Questions")
-        suggestion_cols = st.columns(2)
-        for i, question in enumerate(st.session_state.suggested_questions[:6]):
-            col = suggestion_cols[i % 2]
-            if col.button(question, key=f"suggested_{i}", use_container_width=True):
-                # Use the suggested question
-                st.session_state.chat_history.append({"role": "user", "content": question})
-                with st.spinner("Thinking..."):
-                    answer = answer_question(question, st.session_state.pdf_chunks)
-                st.session_state.chat_history.append({"role": "assistant", "content": answer})
-                
-                # Update suggested questions based on the answer
-                st.session_state.suggested_questions = generate_navigation_suggestions(
-                    st.session_state.pdf_text,
-                    st.session_state.pdf_chunks,
-                    question,
-                    answer
-                )
-                st.rerun()
-    
     # Display chat history in a more visually appealing way
     with chat_container:
         if st.session_state.chat_history:
@@ -280,12 +258,13 @@ def display_chat_interface():
     if "submit_question" not in st.session_state:
         st.session_state.submit_question = False
     
-    # Set up form to handle submission properly
+    # Set up form to handle submission properly with custom styling
     with st.form(key="question_form"):
         user_question = st.text_input(
             "Ask a question about the assignment:", 
             key="question_input",
-            placeholder="Type your question here..."
+            placeholder="Type your question here...",
+            value=""  # Ensure empty value after submission
         )
         submit_cols = st.columns([3, 1])
         with submit_cols[1]:
@@ -295,6 +274,28 @@ def display_chat_interface():
         if submit_button and user_question:
             st.session_state.submit_question = True
             st.session_state.current_question = user_question
+    
+    # Display suggested questions below the input box
+    if st.session_state.suggested_questions:
+        st.write("#### Suggested Questions")
+        suggestion_cols = st.columns(2)
+        for i, question in enumerate(st.session_state.suggested_questions[:6]):
+            col = suggestion_cols[i % 2]
+            if col.button(question, key=f"suggested_{i}", use_container_width=True):
+                # Use the suggested question
+                st.session_state.chat_history.append({"role": "user", "content": question})
+                with st.spinner("Thinking..."):
+                    answer = answer_question(question, st.session_state.pdf_chunks)
+                st.session_state.chat_history.append({"role": "assistant", "content": answer})
+                
+                # Update suggested questions based on the answer
+                st.session_state.suggested_questions = generate_navigation_suggestions(
+                    st.session_state.pdf_text,
+                    st.session_state.pdf_chunks,
+                    question,
+                    answer
+                )
+                st.rerun()
     
     # Handle the question submission after the form
     if st.session_state.submit_question and hasattr(st.session_state, 'current_question'):
@@ -325,6 +326,10 @@ def display_chat_interface():
         # Clear the current question
         if hasattr(st.session_state, 'current_question'):
             delattr(st.session_state, 'current_question')
+        
+        # Clear the input field - need to modify session state directly
+        if 'question_input' in st.session_state:
+            st.session_state.question_input = ""
         
         # Rerun to refresh the UI
         st.rerun()
