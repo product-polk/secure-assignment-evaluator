@@ -17,12 +17,53 @@ A secure platform designed for evaluating assignments without the ability to ext
 3. Set your OpenAI API key as an environment variable: `OPENAI_API_KEY=your_key_here`
 4. Run the Streamlit app: `streamlit run app.py`
 
-## Deployment
+## Deployment Options
 
-This project is configured for deployment on Vercel with the following:
-- Python 3.11 runtime
-- Streamlit web framework
-- Required dependencies in deployment_requirements.txt
-- Configuration in vercel.json
+### Important Note About Vercel
 
-Visit [talktomysubmission.com](https://talktomysubmission.com) to see it in action!
+Streamlit applications are not well-suited for Vercel's serverless architecture. For a fully functional deployment, we recommend using one of the following platforms:
+
+### 1. Streamlit Cloud (Recommended)
+
+1. Push your project to GitHub
+2. Go to [Streamlit Cloud](https://streamlit.io/cloud)
+3. Connect your GitHub repository
+4. Add your `OPENAI_API_KEY` as a secret
+5. Deploy
+
+### 2. Render
+
+1. Create a `render.yaml` file:
+```yaml
+services:
+  - type: web
+    name: secure-assignment-evaluator
+    env: python
+    buildCommand: pip install -r deployment_requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+```
+2. Create an account on [Render](https://render.com)
+3. Connect your GitHub repository
+4. Deploy using the `render.yaml` configuration
+
+### 3. Heroku
+
+1. Create a `Procfile`:
+```
+web: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+```
+2. Deploy using the Heroku CLI or GitHub integration
+
+### 4. Digital Ocean App Platform
+
+1. Create an account on [Digital Ocean](https://www.digitalocean.com/products/app-platform/)
+2. Connect your GitHub repository
+3. Configure as a Python application
+4. Set the build command: `pip install -r deployment_requirements.txt`
+5. Set the run command: `streamlit run app.py --server.port $PORT --server.address 0.0.0.0`
+6. Add your `OPENAI_API_KEY` environment variable
+
+For more detailed instructions, see the respective platform's documentation.
