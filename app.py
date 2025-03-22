@@ -55,13 +55,35 @@ def save_assignment_data():
     if not st.session_state.assignment_id:
         st.session_state.assignment_id = str(uuid.uuid4())
     
+    # Convert tables to a serializable format
+    serializable_tables = []
+    for table in st.session_state.tables:
+        serializable_table = table.copy()
+        # Convert DataFrame to dictionary if it exists
+        if 'df' in serializable_table:
+            # Convert DataFrame to dictionary if it's a pandas DataFrame
+            if hasattr(serializable_table['df'], 'to_dict'):
+                serializable_table['df'] = serializable_table['df'].to_dict()
+            # If it's already been converted or is something else, leave it
+        serializable_tables.append(serializable_table)
+    
+    # Convert charts to a serializable format
+    serializable_charts = []
+    for chart in st.session_state.charts:
+        serializable_chart = chart.copy()
+        # Convert any DataFrame data to dictionary if present
+        if 'data' in serializable_chart and hasattr(serializable_chart['data'], 'to_dict'):
+            serializable_chart['data'] = serializable_chart['data'].to_dict()
+        serializable_charts.append(serializable_chart)
+    
+    # Create assignment data with serializable components
     assignment_data = {
         'id': st.session_state.assignment_id,
         'timestamp': datetime.now().isoformat(),
         'pdf_text': st.session_state.pdf_text,
         'pdf_chunks': st.session_state.pdf_chunks,
-        'tables': st.session_state.tables,
-        'charts': st.session_state.charts,
+        'tables': serializable_tables,
+        'charts': serializable_charts,
         'file_hash': st.session_state.file_hash
     }
     
@@ -83,11 +105,29 @@ def load_assignment_data(assignment_id):
         with open(assignment_path, 'r') as f:
             assignment_data = json.load(f)
         
+        # Import pandas here to avoid issues if it's not at the top level
+        import pandas as pd
+        
         # Load data into session state
         st.session_state.pdf_text = assignment_data['pdf_text']
         st.session_state.pdf_chunks = assignment_data['pdf_chunks']
-        st.session_state.tables = assignment_data['tables']
-        st.session_state.charts = assignment_data['charts']
+        
+        # Convert tables back from serialized format if needed
+        tables = assignment_data['tables']
+        for table in tables:
+            # Convert dictionary back to DataFrame if needed
+            if 'df' in table and isinstance(table['df'], dict):
+                table['df'] = pd.DataFrame.from_dict(table['df'])
+        st.session_state.tables = tables
+        
+        # Convert charts back from serialized format if needed
+        charts = assignment_data['charts']
+        for chart in charts:
+            # Convert data dictionary back to DataFrame if needed
+            if 'data' in chart and isinstance(chart['data'], dict):
+                chart['data'] = pd.DataFrame.from_dict(chart['data'])
+        st.session_state.charts = charts
+        
         st.session_state.file_hash = assignment_data['file_hash']
         st.session_state.pdf_processed = True
         st.session_state.assignment_id = assignment_id
