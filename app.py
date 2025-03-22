@@ -299,39 +299,39 @@ def display_chat_interface():
             if submit_button and user_question:
                 st.session_state.submit_question = True
                 st.session_state.current_question = user_question
-    
-    # Handle the question submission after the form
-    if st.session_state.submit_question and hasattr(st.session_state, 'current_question'):
-        # Get the question
-        question = st.session_state.current_question
         
-        # Reset the submission flag
-        st.session_state.submit_question = False
-        
-        # Add to chat history
-        st.session_state.chat_history.append({"role": "user", "content": question})
-        
-        # Generate answer
-        with st.spinner("Generating answer..."):
-            answer = answer_question(question, st.session_state.pdf_chunks)
-        
-        # Add answer to chat history
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
-        
-        # Update suggested questions
-        st.session_state.suggested_questions = generate_navigation_suggestions(
-            st.session_state.pdf_text,
-            st.session_state.pdf_chunks,
-            question,
-            answer
-        )
-        
-        # Clear the current question
-        if hasattr(st.session_state, 'current_question'):
-            delattr(st.session_state, 'current_question')
-        
-        # Rerun to refresh the UI
-        st.rerun()
+        # Handle the question submission after the form
+        if st.session_state.submit_question and hasattr(st.session_state, 'current_question'):
+            # Get the question
+            question = st.session_state.current_question
+            
+            # Reset the submission flag
+            st.session_state.submit_question = False
+            
+            # Add to chat history
+            st.session_state.chat_history.append({"role": "user", "content": question})
+            
+            # Generate answer
+            with st.spinner("Generating answer..."):
+                answer = answer_question(question, st.session_state.pdf_chunks)
+            
+            # Add answer to chat history
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+            
+            # Update suggested questions
+            st.session_state.suggested_questions = generate_navigation_suggestions(
+                st.session_state.pdf_text,
+                st.session_state.pdf_chunks,
+                question,
+                answer
+            )
+            
+            # Clear the current question
+            if hasattr(st.session_state, 'current_question'):
+                delattr(st.session_state, 'current_question')
+            
+            # Rerun to refresh the UI
+            st.rerun()
 
 def evaluation_interface():
     """Main evaluation interface with tabs"""
