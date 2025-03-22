@@ -7,100 +7,87 @@ from secure_qa import answer_question
 
 def extract_tables_and_visualize(table_data):
     """
-    Visualize table data securely
+    Provide insights about table data without displaying the full table
     
     Args:
         table_data (dict): Table data with DataFrame
     """
     try:
-        # Extract the DataFrame and make a copy to avoid modifying the original
+        # Extract the DataFrame but don't display it directly
         df = table_data["data"].copy()
         
-        # Display basic information
-        st.write(f"Table from page {table_data['page']}")
+        # Display only metadata about the table
+        st.write(f"##### Table Analysis (Page {table_data['page']})")
         
-        # Create a safe version of the table with fixed column names
+        # Information about the table without showing content
+        st.info(f"A table was detected on page {table_data['page']}. Below are insights about the table without displaying its full contents.")
+        
+        # Create a safe version of the table with fixed column names (for internal use only)
         df_safe = create_safe_dataframe(df)
         
-        # Display the table in a secure way
-        st.dataframe(df_safe)
+        # Display table structure information
+        st.write("**Table Structure:**")
         
-        # Try to intelligently create a visualization if possible
-        try:
-            # Check if there are numeric columns that could be visualized
-            numeric_cols = df_safe.select_dtypes(include=['int64', 'float64']).columns.tolist()
-            text_cols = df_safe.select_dtypes(include=['object']).columns.tolist()
-            
-            if len(numeric_cols) > 0 and len(text_cols) > 0:
-                # We have both text and numeric columns, so we can create a bar or line chart
-                st.write("### Visualization")
-                
-                # Select columns for visualization
-                category_col = st.selectbox("Select category column:", text_cols, key=f"cat_{table_data['table_id']}")
-                value_col = st.selectbox("Select value column:", numeric_cols, key=f"val_{table_data['table_id']}")
-                
-                # Determine chart type
-                chart_types = ["Bar Chart", "Line Chart", "Scatter Plot"]
-                chart_type = st.selectbox("Select chart type:", chart_types, key=f"chart_type_{table_data['table_id']}")
-                
-                # Create the chart
-                if chart_type == "Bar Chart":
-                    fig = px.bar(df_safe, x=category_col, y=value_col, title=f"{value_col} by {category_col}")
-                    st.plotly_chart(fig, use_container_width=True)
-                elif chart_type == "Line Chart":
-                    fig = px.line(df_safe, x=category_col, y=value_col, title=f"{value_col} by {category_col}")
-                    st.plotly_chart(fig, use_container_width=True)
-                else:  # Scatter Plot
-                    fig = px.scatter(df_safe, x=category_col, y=value_col, title=f"{value_col} vs {category_col}")
-                    st.plotly_chart(fig, use_container_width=True)
-            
-            elif len(numeric_cols) >= 2:
-                # We have multiple numeric columns, so we can create a scatter plot
-                st.write("### Visualization")
-                
-                x_col = st.selectbox("Select X-axis:", numeric_cols, key=f"x_{table_data['table_id']}")
-                y_col = st.selectbox("Select Y-axis:", numeric_cols, key=f"y_{table_data['table_id']}", index=min(1, len(numeric_cols)-1))
-                
-                fig = px.scatter(df_safe, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
-                st.plotly_chart(fig, use_container_width=True)
+        # Show column names and data types but not the actual data
+        col_info = []
+        for col in df_safe.columns:
+            dtype = df_safe[col].dtype
+            col_info.append(f"• {col} ({dtype})")
         
-        except Exception as e:
-            st.write(f"Could not create visualization: {e}")
+        st.write("\n".join(col_info))
+        
+        # Show summary stats of the table
+        st.write("**Table Summary:**")
+        st.write(f"• Rows: {len(df_safe)}")
+        st.write(f"• Columns: {len(df_safe.columns)}")
+        
+        # Analyze the table using AI
+        st.write("**Table Analysis:**")
+        
+        # Get insights about the table using the LLM
+        with st.spinner("Analyzing table data..."):
+            # Convert first few rows to string for analysis (limited data)
+            table_sample = df_safe.head(3).to_string(index=False)
             
-        # Offer table analysis option
-        if st.button("Analyze Table", key=f"analyze_{table_data['table_id']}"):
-            with st.spinner("Analyzing table..."):
-                # Perform basic table analysis
-                st.write("### Table Analysis")
-                
-                # Display basic statistics for numeric columns
-                numeric_cols = df_safe.select_dtypes(include=['int64', 'float64']).columns.tolist()
-                if numeric_cols:
-                    st.write("#### Numeric Column Statistics")
-                    st.dataframe(df_safe[numeric_cols].describe())
-                
-                # Count unique values for categorical columns
-                categorical_cols = df_safe.select_dtypes(include=['object']).columns.tolist()
-                if categorical_cols:
-                    st.write("#### Categorical Column Distributions")
-                    for col in categorical_cols[:3]:  # Limit to first 3 columns to avoid overload
-                        st.write(f"**{col}** distribution:")
-                        value_counts = df_safe[col].value_counts().reset_index()
-                        value_counts.columns = [col, 'Count']
-                        st.dataframe(value_counts)
-                        
-                        # Simple bar chart of distribution
-                        fig = px.bar(value_counts, x=col, y='Count', title=f"{col} Distribution")
-                        st.plotly_chart(fig, use_container_width=True)
+            # Create the prompt
+            insights_prompt = (
+                f"You're analyzing a table from page {table_data['page']}. "
+                f"Provide 3-5 key insights about what this table represents based on its structure and a small sample. "
+                f"DO NOT recreate the table or include large amounts of data in your response. "
+                f"Format your response as bullet points and focus on the meaning/purpose of the table, not just describing it. "
+                f"Do not include direct quotes from the table that could be used to reconstruct it.\n\n"
+                f"Table columns: {', '.join(df_safe.columns.tolist())}"
+            )
             
+            # Use the secure_qa.answer_question function to generate insights
+            insights = answer_question(insights_prompt, None)
+            st.write(insights)
+        
+        # Add a section for evaluators to ask specific questions about the table
+        st.write("**Ask about this table:**")
+        table_question = st.text_input(
+            "Ask a specific question about this table:", 
+            key=f"table_question_{table_data['table_id']}"
+        )
+        
+        if st.button("Submit Question", key=f"table_btn_{table_data['table_id']}"):
+            if table_question:
+                with st.spinner("Analyzing..."):
+                    # Create a prompt for the specific question that doesn't expose full data
+                    question_prompt = (
+                        f"Answer the following question about a table on page {table_data['page']} "
+                        f"based on the table content. Do not include more than a few cells of data "
+                        f"in your response and do not recreate the full table: {table_question}\n\n"
+                        f"Table columns: {', '.join(df_safe.columns.tolist())}"
+                    )
+                    
+                    answer = answer_question(question_prompt, None)
+                    st.write("**Answer:**")
+                    st.write(answer)
+    
     except Exception as e:
-        st.error(f"Error displaying table: {e}")
-        st.write("Could not display this table due to formatting issues. Displaying text version instead.")
-        try:
-            # Try to show a text representation
-            st.text(str(table_data["data"]))
-        except:
-            st.write("Unable to display table contents in any format.")
+        st.error(f"Error analyzing table: {e}")
+        st.write("Could not analyze this table due to formatting issues.")
 
 def create_safe_dataframe(df):
     """
@@ -167,32 +154,27 @@ def create_safe_dataframe(df):
 
 def extract_charts_and_visualize(chart_info):
     """
-    Extract and display chart information securely without visualizing
+    Extract and display chart information securely without visualizing or revealing raw data
     
     Args:
         chart_info (dict): Chart information
     """
-    st.write(f"##### Chart/Figure from page {chart_info['page']}")
+    st.write(f"##### Chart Analysis (Page {chart_info['page']})")
     
-    # Display chart context
-    if "context" in chart_info:
-        st.write("**Chart Context:**")
-        st.markdown(f"```{chart_info['context']}```")
+    # Only show that this is a chart detected on page X
+    st.info(f"A chart or figure was detected on page {chart_info['page']}. Below are insights about what this chart likely represents, based on analysis of the surrounding content.")
     
-    # Display any text found in the chart area
-    if "area_text" in chart_info and chart_info["area_text"]:
-        st.write("**Text in chart area:**")
-        st.markdown(f"```{chart_info['area_text']}```")
-    
-    # Provide insights about the chart
+    # Provide insights about the chart without showing raw context
     st.write("**Chart Insights:**")
     
     # Get chart insights using the LLM but don't visualize
-    with st.spinner("Analyzing chart context..."):
+    with st.spinner("Analyzing chart..."):
+        # Create a prompt that doesn't expose the actual data
         insights_prompt = (
             f"Based on the surrounding text context of this chart on page {chart_info['page']}, "
             f"provide 3-5 key insights this chart likely conveys. DO NOT try to recreate or visualize the chart. "
-            f"Just provide analytical insights based on the chart context. Format your response as bullet points."
+            f"Just provide analytical insights based on the chart context. Format your response as bullet points. "
+            f"Make sure your response does not include direct quotes that could be used to reconstruct the content."
         )
         
         if "context" in chart_info:
@@ -207,6 +189,33 @@ def extract_charts_and_visualize(chart_info):
         
         # Display the insights
         st.write(insights)
+        
+    # Add a section for evaluators to ask specific questions about this chart
+    st.write("**Ask about this chart:**")
+    chart_question = st.text_input(
+        "Ask a specific question about this chart:", 
+        key=f"chart_question_{chart_info['chart_id']}"
+    )
+    
+    if st.button("Submit Question", key=f"chart_btn_{chart_info['chart_id']}"):
+        if chart_question:
+            with st.spinner("Analyzing..."):
+                # Create a prompt for the specific question
+                question_prompt = (
+                    f"Answer the following question about a chart on page {chart_info['page']} "
+                    f"based on the surrounding context. Do not include direct quotes longer than a few words "
+                    f"and do not try to recreate the chart: {chart_question}"
+                )
+                
+                if "context" in chart_info:
+                    question_prompt += f"\n\nChart context: {chart_info['context']}"
+                
+                if "area_text" in chart_info and chart_info["area_text"]:
+                    question_prompt += f"\n\nText in chart area: {chart_info['area_text']}"
+                
+                answer = answer_question(question_prompt, None)
+                st.write("**Answer:**")
+                st.write(answer)
 
 # The following placeholder visualization methods have been removed
 # since we don't want to recreate any charts, even as placeholders.
