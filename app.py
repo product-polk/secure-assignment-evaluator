@@ -248,6 +248,9 @@ def display_chat_interface():
                     question,
                     answer
                 )
+                
+                # Force a complete UI refresh to prevent stacking
+                st.session_state.container_reset = True
                 st.rerun()
     
     # Display chat history in a more visually appealing way
@@ -326,7 +329,8 @@ def display_chat_interface():
         if hasattr(st.session_state, 'current_question'):
             delattr(st.session_state, 'current_question')
         
-        # Rerun to refresh the UI
+        # Force a complete UI refresh to prevent stacking
+        st.session_state.container_reset = True
         st.rerun()
 
 def evaluation_interface():
@@ -580,7 +584,9 @@ def evaluator_mode():
         if st.session_state.assignment_id != assignment_id:
             with st.spinner("Loading assignment..."):
                 if load_assignment_data(assignment_id):
-                    st.success("Assignment loaded successfully!")
+                    # Force a complete UI refresh by clearing all UI elements
+                    st.session_state.container_reset = True
+                    st.rerun()
                 else:
                     st.error("Could not load the assignment. The link may be invalid or expired.")
     
@@ -596,7 +602,8 @@ def evaluator_mode():
             if submit_id and input_id:
                 with st.spinner("Loading assignment..."):
                     if load_assignment_data(input_id):
-                        st.success("Assignment loaded successfully!")
+                        # Force a complete UI refresh by clearing all UI elements
+                        st.session_state.container_reset = True
                         st.rerun()
                     else:
                         st.error("Could not load the assignment. The ID may be invalid or expired.")
@@ -629,8 +636,9 @@ def main():
     import os
     # Check if we need to reset containers due to mode switch
     if st.session_state.container_reset:
-        # Create a container that will replace previous UI elements
-        for i in range(20):
+        # Use st.empty() to replace all existing UI elements
+        # We're using many st.empty() calls to ensure all UI is cleared
+        for i in range(50):  # Increased from 20 to 50 to handle more stacked elements
             st.empty()
         
         # Reset session state variables to clean slate
