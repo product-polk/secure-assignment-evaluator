@@ -1,9 +1,22 @@
 import re
-import nltk
-from nltk.tokenize import sent_tokenize
 
-# Directly download NLTK punkt data package
-nltk.download('punkt', quiet=True)
+def simple_sent_tokenize(text):
+    """
+    Simple sentence tokenizer using regex patterns for common sentence delimiters
+    
+    Args:
+        text (str): Text to tokenize into sentences
+        
+    Returns:
+        list: List of sentences
+    """
+    # Pattern to split on periods, question marks, and exclamation points
+    # followed by spaces or newlines, but avoid splitting after common abbreviations
+    text = text.replace("\n", " ")
+    pattern = r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s'
+    sentences = re.split(pattern, text)
+    # Clean up and return non-empty sentences
+    return [s.strip() for s in sentences if s.strip()]
 
 def chunk_text(text, max_chunk_size=1000, overlap=200):
     """
@@ -36,8 +49,8 @@ def chunk_text(text, max_chunk_size=1000, overlap=200):
             
         page_position = 0
         
-        # Split the page into sentences
-        sentences = sent_tokenize(page_text)
+        # Split the page into sentences using our custom tokenizer
+        sentences = simple_sent_tokenize(page_text)
         
         current_chunk = ""
         current_chunk_sentences = []
