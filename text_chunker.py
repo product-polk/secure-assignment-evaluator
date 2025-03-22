@@ -2,11 +2,8 @@ import re
 import nltk
 from nltk.tokenize import sent_tokenize
 
-# Download necessary NLTK data
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt', quiet=True)
+# Directly download NLTK punkt data package
+nltk.download('punkt', quiet=True)
 
 def chunk_text(text, max_chunk_size=1000, overlap=200):
     """
