@@ -1,42 +1,28 @@
-# Secure Assignment Evaluation Platform
+# Secure Assignment Evaluator
 
-A secure platform for evaluating assignments that provides intelligent document analysis with robust content protection and data handling mechanisms.
+A secure platform designed for evaluating assignments without the ability to extract full content. This tool allows candidates to upload assignments and share them with evaluators using secure, encrypted storage.
 
 ## Features
 
-- **Secure PDF Processing**: Upload and analyze PDF assignments without exposing raw content
-- **AI-Powered Q&A**: Intelligent question-answering system that respects document confidentiality
-- **Content Protection**: Prevents extraction attempts while providing meaningful insights
-- **Chart & Table Analysis**: Provides AI-generated insights about visual elements without displaying raw data
-- **Intuitive Sharing**: Easy assignment sharing between candidates and evaluators with clean, shareable IDs
+- **Secure Content Processing**: Evaluators can analyze assignments without being able to extract the full content
+- **Intelligent Q&A**: Ask questions about assignment content with AI-powered responses
+- **Secure Chart & Table Analysis**: Get insights on charts and tables without revealing raw data
+- **End-to-End Encryption**: All files and assignment data are encrypted to ensure privacy
+- **User-Friendly Sharing**: Generate easy-to-share links with secure assignment IDs
 
-## Setup
+## Setup Instructions
 
-1. Clone the repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Set up your OpenAI API key as an environment variable: `OPENAI_API_KEY`
-4. Run the application: `streamlit run app.py`
+1. Clone this repository
+2. Install dependencies: `pip install -r deployment_requirements.txt`
+3. Set your OpenAI API key as an environment variable: `OPENAI_API_KEY=your_key_here`
+4. Run the Streamlit app: `streamlit run app.py`
 
-## Usage
+## Deployment
 
-### For Candidates:
-- Upload your assignment PDF
-- Share the generated assignment ID with evaluators
+This project is configured for deployment on Vercel with the following:
+- Python 3.11 runtime
+- Streamlit web framework
+- Required dependencies in deployment_requirements.txt
+- Configuration in vercel.json
 
-### For Evaluators:
-- Enter the assignment ID shared by a candidate
-- Use the Q&A system to explore the document
-- Follow suggested questions or ask your own
-
-## Dependencies
-
-- streamlit
-- pandas
-- pdfplumber
-- plotly
-- nltk
-- openai
-
-## License
-
-[MIT License](LICENSE)
+Visit [talktomysubmission.com](https://talktomysubmission.com) to see it in action!

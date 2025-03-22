@@ -1,50 +1,47 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-
-# Virtual environments
-venv/
+*.so
+.Python
 env/
-ENV/
-
-# Environment variables / secrets
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
 .env
-.env.local
-.secrets
 
-# Streamlit
+# Streamlit specific
 .streamlit/secrets.toml
 
 # Data files
-data/*.json
-data/*.pdf
+data/*.enc
+encrypted_data/
 
 # Logs
 *.log
 
-# OS-specific files
+# System files
 .DS_Store
 Thumbs.db
-
-# IDE files
-.idea/
 .vscode/
-*.swp
-*.swo
+.idea/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Replit files
-.replit
-.upm/
-.pythonlibs/
-.local/
-.cache/
+# Node/npm
+node_modules/
+package-lock.json
 uv.lock
+
+# Specific to this app
+generated-icon.png
