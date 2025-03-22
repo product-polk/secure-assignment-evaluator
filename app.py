@@ -5,11 +5,20 @@ import uuid
 import json
 from datetime import datetime
 from pdf_processor import extract_text_and_elements_from_pdf
-from text_chunker import chunk_text
+from text_chunker import chunk_text, simple_sent_tokenize
 from secure_qa import answer_question
 from visualization import extract_tables_and_visualize, extract_charts_and_visualize
 from navigation import generate_navigation_suggestions
 from utils import get_file_hash
+
+# Use our custom sentence tokenizer instead of NLTK's
+# This prevents NLTK from trying to load punkt_tab resource
+try:
+    import nltk.tokenize
+    nltk.tokenize.sent_tokenize = simple_sent_tokenize
+except ImportError:
+    # NLTK not available, which is fine since we use our custom tokenizer
+    pass
 
 st.set_page_config(
     page_title="Secure Assignment Evaluator",
