@@ -4,7 +4,7 @@ import tempfile
 from pdf_processor import extract_text_and_elements_from_pdf
 from text_chunker import chunk_text
 from secure_qa import answer_question
-from visualization import extract_tables_and_visualize
+from visualization import extract_tables_and_visualize, extract_charts_and_visualize
 from navigation import generate_navigation_suggestions
 from utils import get_file_hash
 
@@ -25,6 +25,8 @@ if 'file_hash' not in st.session_state:
     st.session_state.file_hash = None
 if 'tables' not in st.session_state:
     st.session_state.tables = []
+if 'charts' not in st.session_state:
+    st.session_state.charts = []
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 if 'suggested_questions' not in st.session_state:
@@ -50,7 +52,7 @@ def main():
                         temp_file_path = tmp_file.name
                     
                     # Extract text and elements from the PDF
-                    text, tables = extract_text_and_elements_from_pdf(temp_file_path)
+                    text, tables, charts = extract_text_and_elements_from_pdf(temp_file_path)
                     
                     # Clean up temporary file
                     os.unlink(temp_file_path)
@@ -64,6 +66,7 @@ def main():
                     st.session_state.pdf_chunks = chunks
                     st.session_state.file_hash = file_hash
                     st.session_state.tables = tables
+                    st.session_state.charts = charts
                     st.session_state.chat_history = []
                     
                     # Generate initial navigation suggestions
@@ -76,6 +79,7 @@ def main():
             st.write(f"- Text length: {len(st.session_state.pdf_text)} characters")
             st.write(f"- Chunks: {len(st.session_state.pdf_chunks)}")
             st.write(f"- Tables: {len(st.session_state.tables)}")
+            st.write(f"- Charts: {len(st.session_state.charts)}")
     
     # Main content area
     if not st.session_state.pdf_processed:
