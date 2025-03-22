@@ -30,8 +30,34 @@ def extract_text_and_elements_from_pdf(pdf_path):
                 page_tables = page.extract_tables()
                 for i, table in enumerate(page_tables):
                     if table:
-                        # Convert to DataFrame
-                        df = pd.DataFrame(table[1:], columns=table[0] if table[0] else [f"Col{j}" for j in range(len(table[0]))])
+                        # Generate unique column names
+                        num_columns = len(table[0]) if table and table[0] else len(table[1]) if table and len(table) > 1 else 0
+                        
+                        # Either use first row as headers or create default headers
+                        if table[0]:
+                            # Make sure column names are unique by adding a suffix if necessary
+                            col_names = []
+                            seen = {}
+                            for j, col in enumerate(table[0]):
+                                col_str = str(col).strip() if col else f"Col{j}"
+                                if not col_str:  # Handle empty column names
+                                    col_str = f"Col{j}"
+                                
+                                # If the column name already exists, add a suffix
+                                if col_str in seen:
+                                    seen[col_str] += 1
+                                    col_str = f"{col_str}_{seen[col_str]}"
+                                else:
+                                    seen[col_str] = 0
+                                
+                                col_names.append(col_str)
+                            
+                            # Create DataFrame with clean headers and data
+                            df = pd.DataFrame(table[1:], columns=col_names)
+                        else:
+                            # No headers, create default column names
+                            df = pd.DataFrame(table, columns=[f"Col{j}" for j in range(num_columns)])
+                            
                         tables.append({
                             "page": page_num + 1,
                             "table_id": f"page{page_num+1}_table{i+1}",
