@@ -61,6 +61,8 @@ if 'assignments_dir' not in st.session_state:
 
 def save_assignment_data():
     """Save processed assignment data for sharing"""
+    # Import needed modules
+    import os
     if not st.session_state.pdf_processed:
         return None
     
@@ -134,6 +136,8 @@ def save_assignment_data():
 
 def load_assignment_data(assignment_id):
     """Load assignment data from ID"""
+    # Import needed modules
+    import os
     # Get secure file path for this assignment ID
     assignment_path = secure_file_path(assignment_id)
     
@@ -417,6 +421,9 @@ def select_user_mode():
 
 def candidate_mode():
     """Interface for candidates uploading assignments"""
+    # Import needed modules
+    import os
+    
     # Clear the screen and start fresh
     st.empty()
     
@@ -540,6 +547,9 @@ def candidate_mode():
 
 def evaluator_mode():
     """Interface for evaluators reviewing assignments"""
+    # Import needed modules
+    import os
+    
     # Clear the screen and start fresh
     st.empty()
     
@@ -615,6 +625,8 @@ def evaluator_mode():
 
 def main():
     """Main function to determine which interface to show"""
+    # Import needed modules
+    import os
     # Check if we need to reset containers due to mode switch
     if st.session_state.container_reset:
         # Create a container that will replace previous UI elements
