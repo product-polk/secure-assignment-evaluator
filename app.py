@@ -415,9 +415,9 @@ def evaluator_mode():
         st.rerun()
     
     # Check for assignment ID in URL parameters
-    query_params = st.experimental_get_query_params()
-    if "assignment_id" in query_params and query_params["assignment_id"][0]:
-        assignment_id = query_params["assignment_id"][0]
+    query_params = st.query_params
+    if "assignment_id" in query_params and query_params["assignment_id"]:
+        assignment_id = query_params["assignment_id"]
         if st.session_state.assignment_id != assignment_id:
             with st.spinner("Loading assignment..."):
                 if load_assignment_data(assignment_id):
