@@ -190,15 +190,20 @@ def extract_charts_and_visualize(chart_info):
         # Display the insights
         st.write(insights)
         
-    # Add a section for evaluators to ask specific questions about this chart
+    # Add a section for evaluators to ask specific questions about this chart using a form
     st.write("**Ask about this chart:**")
-    chart_question = st.text_input(
-        "Ask a specific question about this chart:", 
-        key=f"chart_question_{chart_info['chart_id']}"
-    )
     
-    if st.button("Submit Question", key=f"chart_btn_{chart_info['chart_id']}"):
-        if chart_question:
+    # Create a unique form key for this chart
+    form_key = f"chart_form_{chart_info['chart_id']}"
+    
+    with st.form(key=form_key):
+        chart_question = st.text_input(
+            "Ask a specific question about this chart:", 
+            key=f"chart_question_{chart_info['chart_id']}"
+        )
+        submit_chart_question = st.form_submit_button("Submit Question")
+        
+        if submit_chart_question and chart_question:
             with st.spinner("Analyzing..."):
                 # Create a prompt for the specific question
                 question_prompt = (
